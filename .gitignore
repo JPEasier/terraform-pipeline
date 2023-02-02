@@ -1,6 +1,5 @@
 # Local .terraform directories
 **/.terraform/*
-providers-lofal.tf
 
 # .tfstate files
 *.tfstate
@@ -28,3 +27,6 @@ override.tf.json
 
 # Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
 # example: *tfplan*
+
+# Local files
+providers-local.tf
