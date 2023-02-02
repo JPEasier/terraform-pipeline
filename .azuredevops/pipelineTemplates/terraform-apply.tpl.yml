@@ -1,0 +1,52 @@
+parameters:
+  azureServiceConnection: ""
+  stage: ""
+  storageAccountName: ""
+  projectName: ""
+  terraformVersion: ""
+  workingDirectory: ""
+
+steps:
+  - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@0
+    displayName: "Install Terraform ${{ parameters.terraformVersion }}"
+    inputs:
+      terraformVersion: ${{ parameters.terraformVersion }}
+
+  - task: AzureCLI@2
+    displayName: Copy ${{ parameters.stage }} plan from Storage
+    inputs:
+      azureSubscription: ${{ parameters.azureServiceConnection }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        mkdir terraform-live
+        az storage blob download \
+          --file terraform-live.tar \
+          --name "${{ parameters.projectName }}-$(Build.BuildNumber)-live-${{ parameters.stage }}.tar" \
+          --account-name "${{ parameters.storageAccountName }}" \
+          --container-name plans
+        tar -xvf terraform-live.tar -C terraform-live
+
+  - task: AzureCLI@2
+    displayName: Copy ${{ parameters.stage }} plan from Storage
+    inputs:
+      azureSubscription: ${{ parameters.azureServiceConnection }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        mkdir terraform-modules
+        az storage blob download \
+          --file terraform-modules.tar \
+          --name "${{ parameters.projectName }}-$(Build.BuildNumber)-modules-${{ parameters.stage }}.tar" \
+          --account-name "${{ parameters.storageAccountName }}" \
+          --container-name plans
+        tar -xvf terraform-modules.tar -C terraform-modules
+
+  - task: TerraformTaskV2@2
+    displayName: "Terraform apply"
+    name: terrafromApply
+    inputs:
+      command: apply
+      commandOptions: "-lock-timeout=10m ${{ parameters.stage }}.plan"
+      environmentServiceNameAzureRM: ${{ parameters.azureServiceConnection }}
+      workingDirectory: terraform-live

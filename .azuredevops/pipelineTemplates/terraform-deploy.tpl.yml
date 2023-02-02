@@ -1,0 +1,45 @@
+parameters:
+  azureServiceConnection: ""
+  tfstate_storage_account_resource_group: ""
+  tfstate_storage_account_name: ""
+  terraform_version: ""
+  project_name: ""
+  working_directory: ""
+  location: ""
+
+stages:
+  - stage: plan
+    displayName: Plan
+    jobs:
+      - job: devplan
+        displayName: Plan dev
+        steps:
+          - template: terraform-plan.tpl.yaml
+            parameters:
+              stage: dev
+              resourcegroupName: ${{ parameters.tfstate_storage_account_resource_group }}
+              azureServiceConnection: ${{ parameters.azureServiceConnection }}
+              storageAccountName: ${{ parameters.tfstate_storage_account_name }}
+              projectName: ${{ parameters.project_name }}
+              terraformVersion: ${{ parameters.terraform_version }}
+              workingDirectory: ${{ parameters.working_directory }}
+              location: ${{ parameters.location }}
+
+  - stage: dev
+    condition: and(succeeded('plan'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    displayName: Apply dev
+    jobs:
+      - deployment:
+        environment: dev
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - template: terraform-apply.tpl.yaml
+                  parameters:
+                    stage: dev
+                    azureServiceConnection: ${{ parameters.azureServiceConnection }}
+                    storageAccountName: ${{ parameters.tfstate_storage_account_name }}
+                    projectName: ${{ parameters.project_name }}
+                    terraformVersion: ${{ parameters.terraform_version }}
+                    workingDirectory: ${{ parameters.working_directory }}

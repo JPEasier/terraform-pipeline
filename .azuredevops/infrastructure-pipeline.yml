@@ -1,0 +1,35 @@
+pool:
+  vmImage: "ubuntu-latest"
+
+############
+# Prefixes #
+############
+
+trigger:
+  paths:
+    include:
+      - infrastructure-pipeline.yaml
+      - terraform-live
+      
+  branches:
+    include:
+      - main
+
+variables:
+  projectName: "terraform-training"
+  azureServiceConnection: "terraform-devops"
+  storageResourceGroup: "terraform-state"
+  storageName: "<<xxx>>terraformstate"
+  terraformVersion: "1.1.5"
+  location: "germanywestcentral"
+
+stages:
+  - template: ./devops-templates/terraform-deploy.tpl.yaml
+    parameters:
+      azureServiceConnection: $(azureServiceConnection)
+      project_name: $(projectName)
+      working_directory: $(System.DefaultWorkingDirectory)
+      tfstate_storage_account_resource_group: $(storageResourceGroup)
+      tfstate_storage_account_name: $(storageName)
+      terraform_version: $(terraformVersion)
+      location: $(location)
