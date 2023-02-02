@@ -20,7 +20,7 @@ variables:
   azureServiceConnection: "terraform-devops"
   storageResourceGroup: "terraform-state"
   storageName: "<<xxx>>terraformstate"
-  terraformVersion: "1.1.5"
+  terraformVersion: "1.3.7"
   location: "germanywestcentral"
 
 stages:
